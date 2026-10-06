@@ -658,11 +658,12 @@
     });
   }
 
-  /* ---- 实时在线状态(mcsrvstat.us 免费接口) ---- */
+  /* ---- 实时在线状态(mcsrvstat.us 免费接口,60 秒自动刷新) ---- */
 
   var statusDot = $("#statusPill .pill__dot");
   var statusText = $("#statusText");
   var statOnline = $("#statOnline");
+  var statusFirst = true;
 
   function setStatus(mode, text) {
     statusDot.classList.remove("pill__dot--wait", "pill__dot--on", "pill__dot--off");
@@ -670,22 +671,30 @@
     statusText.textContent = text;
   }
 
-  fetch("https://api.mcsrvstat.us/3/yemo.mcservers.win", { cache: "no-store" })
-    .then(function (res) { return res.json(); })
-    .then(function (data) {
-      if (data && data.online) {
-        var n = data.players && data.players.online !== undefined ? data.players.online : 0;
-        var max = data.players && data.players.max !== undefined ? data.players.max : "";
-        setStatus("on", "服务器亮着灯 · 现在 " + n + " 人在夜幕里" + (max ? " / " + max : ""));
-        if (statOnline) countTo(statOnline, n);
-      } else {
-        setStatus("off", "服务器此刻没亮灯，来 QQ 群蹲一波");
-        if (statOnline) statOnline.textContent = "0";
-      }
-    })
-    .catch(function () {
-      setStatus("wait", "状态查询开小差了，进服试试就知道");
-    });
+  function refreshStatus() {
+    fetch("https://api.mcsrvstat.us/3/yemo.mcservers.win", { cache: "no-store" })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data && data.online) {
+          var n = data.players && data.players.online !== undefined ? data.players.online : 0;
+          var max = data.players && data.players.max !== undefined ? data.players.max : "";
+          setStatus("on", "服务器亮着灯 · 现在 " + n + " 人在夜幕里" + (max ? " / " + max : ""));
+          if (statOnline) {
+            if (statusFirst) { statusFirst = false; countTo(statOnline, n); }
+            else if (statOnline.textContent !== String(n)) { statOnline.textContent = n; }
+          }
+        } else {
+          setStatus("off", "服务器此刻没亮灯，来 QQ 群蹲一波");
+          if (statOnline) statOnline.textContent = "0";
+        }
+      })
+      .catch(function () {
+        setStatus("wait", "状态查询开小差了，进服试试就知道");
+      });
+  }
+
+  refreshStatus();
+  setInterval(refreshStatus, 60000);
 
   /* ---- 页脚年份 ---- */
 

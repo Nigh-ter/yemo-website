@@ -764,7 +764,15 @@ main, .footer { position: relative; z-index: 1; }
 .chatlog p.bye { max-height: 0; opacity: 0; transform: translateY(-10px); }
 
 .chatlog b { color: var(--moon); font-weight: 600; }
-.chatlog span { color: var(--ink-dim); }
+
+.chatlog span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink-dim);
+}
 
 .chatlog p.sys span { color: rgba(242, 217, 140, 0.8); font-size: 0.87rem; }
 
@@ -1145,7 +1153,7 @@ main, .footer { position: relative; z-index: 1; }
   .nav__links .btn { justify-content: center; margin-top: 8px; }
   .nav__burger { display: flex; }
 
-  .chatlog { height: 330px; }
+  .chatlog { height: 238px; }
   .hero { padding: 150px 0 170px; }
   .hero__moon { width: 58px; height: 58px; right: 7%; top: 6.5%; }
   .section { padding: 76px 0; }
