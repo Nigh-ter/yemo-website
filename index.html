@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yemo · 夜的尽头，是家 — Minecraft 生存服</title>
+  <meta name="description" content="yemo 是一个 Minecraft Java 版生存服：领地安家、开店经营、公会语音开黑、点歌蹦迪。1.17–1.21.11 都能进，非正版也欢迎。服务器地址 yemo.mcservers.win" />
+  <meta property="og:title" content="yemo · 夜的尽头，是家" />
+  <meta property="og:description" content="Minecraft Java 版生存服 · 领地安家 / 玩家经营 / 社交娱乐 / 收集养成 · 服务器地址 yemo.mcservers.win" />
+  <meta name="theme-color" content="#060913" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ========== 顶部导航 ========== -->
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a class="nav__brand" href="#top" aria-label="回到顶部">
+        <svg class="nav__moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 14.2A8.8 8.8 0 0 1 9.8 3.4a8.8 8.8 0 1 0 10.8 10.8z" fill="currentColor"/></svg>
+        <span>yemo</span>
+      </a>
+      <nav class="nav__links" id="navLinks" aria-label="站内导航">
+        <a href="#play">玩法</a>
+        <a href="#feat">特色</a>
+        <a href="#join">加入我们</a>
+        <a href="#faq">问答</a>
+        <button class="btn btn--gold btn--sm" type="button" data-copy="1059986347" data-toast="群号已复制，去 QQ 搜索粘贴吧">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4c-4.7 0-8.5 3.1-8.5 7 0 2.3 1.2 4.3 3.2 5.6l-.6 3.4 3.5-1.7c.8.2 1.6.3 2.4.3 4.7 0 8.5-3.1 8.5-7s-3.8-7.6-8.5-7.6z"/></svg>
+          加群 1059986347
+        </button>
+      </nav>
+      <button class="nav__burger" id="navBurger" type="button" aria-label="打开菜单" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- ========== 首屏：夜景 ========== -->
+    <section class="hero">
+      <canvas id="stars" aria-hidden="true"></canvas>
+      <div class="hero__moon" aria-hidden="true"></div>
+      <div class="hero__fireflies" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+      <svg class="hero__terrain" viewBox="0 0 1440 190" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#0a1410" d="M0 190V150h60v-18h70v18h50V112h80v20h60v-38h90v24h70V96h80v26h60v-20h80v20h70V84h90v32h60v-18h80v18h60v-30h80v30h60v-16h70v16h80v-22h90v22h60v-14h50v40h30v50z"/>
+        <path fill="none" stroke="rgba(127,200,110,.35)" stroke-width="2" d="M0 150h60v-18h70v18h50v-38h80v20h60v-38h90v24h70v-24h80v26h60v-20h80v20h70v-38h90v32h60v-18h80v18h60v-30h80v30h60v-16h70v16h80v-22h90v22h60v-14h50"/>
+        <path fill="#081009" d="M180 132h22v-20h22v20h-22v-8h-22zM1210 108h24v-22h24v22h-24v-9h-24zM560 118h20v-18h20v18h-20v-7h-20z"/>
+      </svg>
+
+      <div class="container hero__content">
+        <p class="hero__eyebrow pixel">MINECRAFT JAVA &middot; SURVIVAL SERVER</p>
+        <h1 class="hero__wordmark">yemo</h1>
+        <p class="hero__tagline" id="tagline" aria-label="夜的尽头，是家"><span id="taglineText"></span><span class="hero__caret" aria-hidden="true"></span></p>
+        <p class="hero__sub">一个 Java 版生存服。在这里圈地安家、开店做买卖、公会语音开黑，累了就点一首歌全服蹦迪。1.17 到 1.21.11 的客户端都能进，非正版也欢迎。</p>
+
+        <div class="hero__actions">
+          <button class="btn btn--gold" type="button" data-copy="yemo.mcservers.win" data-toast="服务器地址已复制，进游戏粘贴就行">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+            复制服务器地址
+          </button>
+          <button class="btn btn--glass" type="button" data-copy="1059986347" data-toast="群号已复制，去 QQ 搜索粘贴吧">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4c-4.7 0-8.5 3.1-8.5 7 0 2.3 1.2 4.3 3.2 5.6l-.6 3.4 3.5-1.7c.8.2 1.6.3 2.4.3 4.7 0 8.5-3.1 8.5-7s-3.8-7.6-8.5-7.6z"/></svg>
+            QQ 群 1059986347
+          </button>
+        </div>
+
+        <div class="hero__meta">
+          <span class="pill" id="statusPill"><i class="pill__dot pill__dot--wait"></i><span id="statusText">正在看服务器亮没亮灯…</span></span>
+          <span class="pill pill--dim">支持 1.17 – 1.21.11</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 数据条 ========== -->
+    <section class="stats" aria-label="服务器概况">
+      <div class="container">
+        <div class="stats__bar reveal">
+          <div class="stats__cell">
+            <strong id="statOnline">—</strong>
+            <span>实时在线玩家</span>
+          </div>
+          <div class="stats__cell">
+            <strong>1.17 – 1.21.11</strong>
+            <span>支持的客户端版本</span>
+          </div>
+          <div class="stats__cell">
+            <strong>4 种</strong>
+            <span>过日子的方式</span>
+          </div>
+          <div class="stats__cell">
+            <strong>2 位</strong>
+            <span>管理员：夜末、东雪</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 玩法 ========== -->
+    <section class="section" id="play">
+      <div class="container">
+        <div class="section__head reveal">
+          <h2>在 yemo，可以这样过日子</h2>
+          <p>四种玩法不设门槛，想怎么活都行——大多数玩家最后全都要。</p>
+        </div>
+        <div class="play-grid">
+          <article class="card tilt reveal" style="--d:.05s">
+            <div class="card__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5M12 12L4 7.5M12 12v9"/></svg>
+            </div>
+            <h3>生存体验</h3>
+            <p>白天砍树盖房，晚上点灯守家。圈下一块领地，就等于给世界上了把锁——你的一砖一瓦，谁也拿不走。</p>
+            <div class="card__tags"><span>领地保护</span><span>原版生存</span></div>
+          </article>
+          <article class="card tilt reveal" style="--d:.12s">
+            <div class="card__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9l1.2-4h13.6L20 9"/><path d="M4 9v11h16V9"/><path d="M4 9c0 1.4 1.2 2.5 2.7 2.5S9.3 10.4 9.3 9c0 1.4 1.2 2.5 2.7 2.5s2.7-1.1 2.7-2.5c0 1.4 1.2 2.5 2.7 2.5S20 10.4 20 9"/><path d="M9 20v-6h6v6"/></svg>
+            </div>
+            <h3>玩家经营</h3>
+            <p>摆摊开店、明码标价；大件挂上全服拍卖行，小件直接邮寄给买家。日子久了，你就是商业街的一街之主。</p>
+            <div class="card__tags"><span>玩家商店</span><span>拍卖行</span><span>邮寄</span></div>
+          </article>
+          <article class="card tilt reveal" style="--d:.19s">
+            <div class="card__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>
+            </div>
+            <h3>社交娱乐</h3>
+            <p>公会里找队友，语音里一起下矿；到了晚上，全服点歌一起蹦迪，广场就是你的舞台。</p>
+            <div class="card__tags"><span>公会</span><span>语音开黑</span><span>点歌蹦迪</span></div>
+          </article>
+          <article class="card tilt reveal" style="--d:.26s">
+            <div class="card__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.8 6.3.8-4.6 4.3 1.2 6.1L12 17l-5.6 3 1.2-6.1L3 9.6l6.3-.8L12 3z"/></svg>
+            </div>
+            <h3>收集养成</h3>
+            <p>练技能、升称号、每日签到领福利；研究酿酒配方，酿一壶全服独一份的好酒。</p>
+            <div class="card__tags"><span>技能等级</span><span>称号</span><span>签到</span><span>酿酒</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 特色 ========== -->
+    <section class="section section--tint" id="feat">
+      <div class="container">
+        <div class="section__head reveal">
+          <h2>留给你慢慢发现的惊喜</h2>
+          <p>混久了才会懂的热闹，先剧透一半。</p>
+        </div>
+        <div class="bento">
+          <article class="tile tile--wide tilt reveal" style="--d:.05s">
+            <div class="tile__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 8l5 5-6.5 6.5a2 2 0 0 1-2.8 0l-1.2-1.2a2 2 0 0 1 0-2.8L11 8z"/><path d="M13 6l5 5M9 10l5 5M14 20h7"/></svg>
+            </div>
+            <h3>全服拍卖行</h3>
+            <p>不用满世界喊话。把宝贝挂上去，全服都看得见、出得了价；成交了，钱自动进账。</p>
+          </article>
+          <article class="tile tilt reveal" style="--d:.12s">
+            <div class="tile__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7.5l8 5.5 8-5.5"/></svg>
+            </div>
+            <h3>邮寄市场</h3>
+            <p>人下线了，生意还在。东西寄出去，钱等你上线再收。</p>
+          </article>
+          <article class="tile tilt reveal" style="--d:.19s">
+            <div class="tile__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 5.5a6.5 6.5 0 0 1 6.5 6.5"/></svg>
+            </div>
+            <h3>点歌蹦迪</h3>
+            <p>一首歌的时间，把整个服务器变成 livehouse。</p>
+          </article>
+          <article class="tile tilt reveal" style="--d:.26s">
+            <div class="tile__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10l-.6 4.2A4.8 4.8 0 0 1 12 11a4.8 4.8 0 0 1-4.4-3.8L7 3z"/><path d="M12 11v8M8 21h8"/></svg>
+            </div>
+            <h3>手酿美酒</h3>
+            <p>配方保密，火候自悟——有人已经靠它当上了酒馆老板。</p>
+          </article>
+          <article class="tile tilt reveal" style="--d:.33s">
+            <div class="tile__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9.5" r="2.3"/><path d="M15.5 14.6a4.6 4.6 0 0 1 5 4.4"/></svg>
+            </div>
+            <h3>公会据点</h3>
+            <p>想拉帮结派？在这里，这是句好话。</p>
+          </article>
+          <article class="tile tile--wide tilt reveal" style="--d:.4s">
+            <div class="tile__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6"/></svg>
+            </div>
+            <h3>语音开黑</h3>
+            <p>下矿不用打字，喊一嗓子，队友就到。</p>
+          </article>
+          <article class="tile tilt reveal" style="--d:.47s">
+            <div class="tile__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.8 4.8 4.7 1.2-4.7 1.2L12 16l-1.8-4.8-4.7-1.2 4.7-1.2L12 4z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"/></svg>
+            </div>
+            <h3>还没完</h3>
+            <p>剩下的惊喜，进服自己发现。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 三步加入 ========== -->
+    <section class="section" id="join">
+      <div class="container">
+        <div class="section__head reveal">
+          <h2>三步，进服</h2>
+          <p>比下载一个模组还简单。</p>
+        </div>
+        <ol class="steps">
+          <li class="step reveal" style="--d:.05s">
+            <span class="step__num">1</span>
+            <div class="step__body">
+              <h3>复制服务器地址</h3>
+              <p>yemo.mcservers.win，点一下就复制走。</p>
+            </div>
+            <button class="btn btn--glass btn--sm step__action" type="button" data-copy="yemo.mcservers.win" data-toast="服务器地址已复制，进游戏粘贴就行">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+              复制
+            </button>
+          </li>
+          <li class="step reveal" style="--d:.13s">
+            <span class="step__num">2</span>
+            <div class="step__body">
+              <h3>添加进客户端</h3>
+              <p>打开 Java 版客户端（1.17 到 1.21.11 都行），多人游戏 → 添加服务器，把地址粘进去。建议用 1.21.11，体验最完整。</p>
+            </div>
+          </li>
+          <li class="step reveal" style="--d:.21s">
+            <span class="step__num">3</span>
+            <div class="step__body">
+              <h3>进服，报个到</h3>
+              <p>首次进服按提示注册一个登录密码，以后凭密码回家。再加 QQ 群打个招呼——管理员夜末、东雪都在群里。</p>
+            </div>
+            <button class="btn btn--glass btn--sm step__action" type="button" data-copy="1059986347" data-toast="群号已复制，去 QQ 搜索粘贴吧">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4c-4.7 0-8.5 3.1-8.5 7 0 2.3 1.2 4.3 3.2 5.6l-.6 3.4 3.5-1.7c.8.2 1.6.3 2.4.3 4.7 0 8.5-3.1 8.5-7s-3.8-7.6-8.5-7.6z"/></svg>
+              复制群号
+            </button>
+          </li>
+        </ol>
+
+        <div class="cta reveal" style="--d:.1s">
+          <div class="cta__text">
+            <h3>进群，就是自己人</h3>
+            <p>新活动、新玩法、一起玩的人，都在群里。</p>
+          </div>
+          <div class="cta__group">
+            <span class="cta__number">1059986347</span>
+            <button class="btn btn--gold" type="button" data-copy="1059986347" data-toast="群号已复制，去 QQ 搜索粘贴吧">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+              复制群号
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 问答 ========== -->
+    <section class="section section--tint" id="faq">
+      <div class="container container--narrow">
+        <div class="section__head reveal">
+          <h2>新玩家常问</h2>
+        </div>
+        <div class="faq">
+          <details class="faq__item reveal" style="--d:.05s">
+            <summary>是正版服吗？<i aria-hidden="true"></i></summary>
+            <p>不是。yemo 是离线服，非正版玩家也能进。首次进服需要注册一个登录密码，以后每次进服登录。密码自己记好，别告诉任何人。</p>
+          </details>
+          <details class="faq__item reveal" style="--d:.12s">
+            <summary>用什么版本能进？<i aria-hidden="true"></i></summary>
+            <p>1.17 到 1.21.11 都可以，推荐 1.21.11。在启动器里选好版本，添加服务器地址 yemo.mcservers.win 就能进。</p>
+          </details>
+          <details class="faq__item reveal" style="--d:.19s">
+            <summary>遇到问题找谁？<i aria-hidden="true"></i></summary>
+            <p>到 QQ 群 1059986347 里喊一声就行，管理员夜末、东雪都在。还没进服的疑问，群里也会有人答。</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ========== 页脚 ========== -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="footer__brand">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.6 14.2A8.8 8.8 0 0 1 9.8 3.4a8.8 8.8 0 1 0 10.8 10.8z" fill="currentColor"/></svg>
+        <strong>yemo</strong>
+        <span>夜的尽头，是家</span>
+      </div>
+      <p class="footer__meta">服务器管理员：夜末、东雪 &middot; QQ 群 1059986347</p>
+      <p class="footer__fine">本站为玩家社区站点，与 Mojang Studios 及 Microsoft 无关。&copy; <span id="year">2026</span> yemo</p>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>
+    <span id="toastText">已复制</span>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
