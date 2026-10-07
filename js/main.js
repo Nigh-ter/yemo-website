@@ -1,4 +1,4 @@
-/* yemo 官网交互 —— GSAP + Lenis,全站锁 120 帧,全部本地文件 */
+/* yemo 官网交互 —— 昼夜按北京时间自动,GSAP+Lenis,全部本地文件 */
 (function () {
   "use strict";
 
@@ -8,9 +8,13 @@
   var hasGsap = typeof window.gsap !== "undefined";
   var hasLenis = typeof window.Lenis !== "undefined";
   var fine = window.matchMedia("(pointer: fine)").matches;
-  var isMobile = window.matchMedia("(max-width: 700px)").matches;
 
-  /* ---- 全站星空:固定画布,滚动分层漂移 ---- */
+  /* ---- 昼夜主题:按北京时间自动(6:00–18:00 白天) ---- */
+
+  var hour = new Date().getHours();
+  if (hour >= 6 && hour < 18) document.body.classList.add("theme-day");
+
+  /* ---- 全站星空:固定画布,滚动分层漂移(白天主题自动停画) ---- */
 
   var canvas = $("#stars");
   var ctx = canvas.getContext("2d");
@@ -20,10 +24,12 @@
   var dpr = 1;
   var w = 0, h = 0;
   var starSprites = [];
-  var frameBudget = isMobile ? 33.3 : 1000 / 120;
+  var frameBudget = window.matchMedia("(max-width: 700px)").matches ? 33.3 : 1000 / 120;
   var lastDraw = 0;
   var quality = { step: 0, deltas: [], badWins: 0, hz: 0 };
-  var STAR_BASE = isMobile ? 70 : 180;
+  var STAR_BASE = window.matchMedia("(max-width: 700px)").matches ? 70 : 180;
+
+  function starsHidden() { return document.body.classList.contains("theme-day"); }
 
   function makeStarSprite(r) {
     var pad = 3;
@@ -45,8 +51,9 @@
   }
 
   function makeStars() {
-    for (var i = 0, stars = []; i < STAR_BASE; i++) {
-      stars.push({
+    var arr = [];
+    for (var i = 0; i < STAR_BASE; i++) {
+      arr.push({
         x: Math.random() * w,
         y: Math.random() * h,
         tier: Math.min(3, Math.floor((Math.random() * Math.random()) * 4)),
@@ -57,14 +64,14 @@
         depth: Math.random() * 0.8 + 0.2
       });
     }
-    return stars;
+    return arr;
   }
 
   function resize() {
     var rect = canvas.getBoundingClientRect();
     w = rect.width;
     h = rect.height;
-    dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5);
+    dpr = Math.min(window.devicePixelRatio || 1, isMobile() ? 1 : 1.5);
     canvas.width = w * dpr;
     canvas.height = h * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -72,13 +79,17 @@
     buildSprites();
   }
 
-  function spawnMeteor() {
+  function isMobile() { return window.matchMedia("(max-width: 700px)").matches; }
+
+  function spawnMeteor(big) {
     meteors.push({
-      x: Math.random() * w * 0.7 + w * 0.2,
-      y: Math.random() * h * 0.4,
-      vx: -(Math.random() * 5 + 6),
-      vy: Math.random() * 3 + 2.5,
-      life: 1
+      x: big ? Math.random() * w * 0.7 + w * 0.2 : Math.random() * w * 0.6 + w * 0.25,
+      y: big ? Math.random() * h * 0.4 : -30,
+      vx: big ? -(Math.random() * 5 + 6) : -(Math.random() * 1.4 + 1),
+      vy: big ? Math.random() * 3 + 2.5 : Math.random() * 2 + 4.5,
+      life: 1,
+      big: !!big,
+      fade: big ? 0.012 : 0.009
     });
   }
 
@@ -103,17 +114,18 @@
       var mt = meteors[m];
       mt.x += mt.vx;
       mt.y += mt.vy;
-      mt.life -= 0.012;
+      mt.life -= mt.fade;
       if (mt.life <= 0) { meteors.splice(m, 1); continue; }
-      var grad = ctx.createLinearGradient(mt.x, mt.y, mt.x - mt.vx * 9, mt.y - mt.vy * 9);
+      var tl = mt.big ? 9 : 3.2;
+      var grad = ctx.createLinearGradient(mt.x, mt.y, mt.x - mt.vx * tl, mt.y - mt.vy * tl);
       grad.addColorStop(0, "rgba(247, 243, 230, " + (0.9 * mt.life).toFixed(3) + ")");
       grad.addColorStop(1, "rgba(247, 243, 230, 0)");
       ctx.strokeStyle = grad;
-      ctx.lineWidth = 1.6;
+      ctx.lineWidth = mt.big ? 1.6 : 1;
       ctx.lineCap = "round";
       ctx.beginPath();
       ctx.moveTo(mt.x, mt.y);
-      ctx.lineTo(mt.x - mt.vx * 9, mt.y - mt.vy * 9);
+      ctx.lineTo(mt.x - mt.vx * tl, mt.y - mt.vy * tl);
       ctx.stroke();
     }
   }
@@ -126,7 +138,7 @@
 
   resize();
 
-  /* 帧率监控:连续不达标就逐级降画质,弱设备也稳 */
+  /* 帧率监控:连续不达标就逐级降画质 */
   function trackQuality(delta) {
     quality.deltas.push(delta);
     if (quality.deltas.length < 90) return;
@@ -151,32 +163,41 @@
     if (t - lastDraw < frameBudget - 0.6) return;
     var delta = t - lastDraw;
     lastDraw = t;
-    drawFrame(t);
+    if (!starsHidden()) drawFrame(t);
     trackQuality(delta);
     lanternTick();
   }
   requestAnimationFrame(masterLoop);
 
+  /* 大火流星:低频、单发;细流星雨:多颗错落下落(仅夜晚) */
   (function scheduleMeteor() {
     setTimeout(function () {
-      spawnMeteor();
+      if (!document.hidden && !starsHidden() && meteors.length < 3) spawnMeteor(true);
       scheduleMeteor();
-    }, Math.random() * 6000 + 3500);
+    }, Math.random() * 9000 + 5000);
   })();
 
-  /* ---- Lenis 丝滑滚动(GSAP ticker 统一锁 120) ---- */
+  (function scheduleShower() {
+    setTimeout(function () {
+      if (!document.hidden && !starsHidden()) {
+        for (var i = 0; i < 3; i++) {
+          (function (d) {
+            setTimeout(function () {
+              if (!document.hidden && !starsHidden() && meteors.length < 9) spawnMeteor(false);
+            }, d);
+          })(i * 380 + Math.random() * 250);
+        }
+      }
+      scheduleShower();
+    }, Math.random() * 5000 + 4500);
+  })();
+
+  /* ---- Lenis ---- */
 
   var lenis = null;
-
-  if (hasGsap && typeof window.ScrollTrigger !== "undefined") {
-    window.gsap.registerPlugin(window.ScrollTrigger);
-    if (window.SplitText) window.gsap.registerPlugin(window.SplitText);
-    window.gsap.ticker.fps(120);
-  }
-
   if (hasLenis) {
     lenis = new window.Lenis({
-      duration: 1.15,
+      duration: 0.9,
       easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); }
     });
     if (hasGsap) {
@@ -184,10 +205,7 @@
       window.gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
       window.gsap.ticker.lagSmoothing(0);
     } else {
-      (function raf(time) {
-        lenis.raf(time);
-        requestAnimationFrame(raf);
-      })(0);
+      (function raf(time) { lenis.raf(time); requestAnimationFrame(raf); })(0);
     }
   }
 
@@ -225,18 +243,23 @@
     lantern.style.transform = "translate(" + lx.toFixed(1) + "px," + ly.toFixed(1) + "px)";
   }
 
-  /* ---- 导航 + 进度条 ---- */
+  /* ---- 导航:滚动方向感知 + 进度条 ---- */
 
   var nav = $("#nav");
   var burger = $("#navBurger");
   var links = $("#navLinks");
   var progress = $("#progress");
+  var lastY = 0;
 
   function onScroll() {
-    nav.classList.toggle("scrolled", window.scrollY > 24);
+    var y = window.scrollY || 0;
+    nav.classList.toggle("scrolled", y > 24);
+    if (y > lastY + 6 && y > 300) nav.classList.add("hide");
+    else if (y < lastY - 6 || y <= 300) nav.classList.remove("hide");
+    lastY = y;
     var max = document.documentElement.scrollHeight - window.innerHeight;
     if (progress && max > 0) {
-      progress.style.width = ((window.scrollY / max) * 100).toFixed(2) + "%";
+      progress.style.width = ((y / max) * 100).toFixed(2) + "%";
     }
   }
   window.addEventListener("scroll", onScroll, { passive: true });
@@ -307,17 +330,33 @@
     })();
   })();
 
-  /* ---- 滚动渐入 ---- */
+  /* ---- 滚动渐入:可逆,滚回去会倒放 ---- */
 
-  var io = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("on");
-        io.unobserve(entry.target);
-      }
+  var revealsReady = false;
+  function initReveals() {
+    if (revealsReady || !hasGsap) return;
+    revealsReady = true;
+    $$(".reveal").forEach(function (el) {
+      gsap.set(el, { autoAlpha: 0, y: 24 });
+      ScrollTrigger.create({
+        trigger: el, start: "top 94%",
+        onEnter: function () {
+          /* 快滚补偿:元素已被用户滚过半屏就直接显形,不再慢慢播 */
+          var deep = el.getBoundingClientRect().top < window.innerHeight * 0.45;
+          gsap.to(el, {
+            autoAlpha: 1, y: 0,
+            duration: deep ? 0.18 : 0.9,
+            delay: deep ? 0 : (parseFloat(getComputedStyle(el).getPropertyValue("--d")) || 0),
+            ease: "power3.out", overwrite: "auto"
+          });
+        },
+        onLeaveBack: function () {
+          gsap.to(el, { autoAlpha: 0, y: 24, duration: 0.3, overwrite: "auto" });
+        }
+      });
     });
-  }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
-  $$(".reveal").forEach(function (el) { io.observe(el); });
+  }
+  if (!hasGsap) $$(".reveal").forEach(function (el) { el.classList.add("on"); });
 
   /* ---- 一键复制 + 提示气泡 ---- */
 
@@ -392,7 +431,7 @@
     });
   }
 
-  /* ---- 卡片 3D 悬浮 + 光斑跟随 ---- */
+  /* ---- 卡片 3D 倾斜(特色区 bento) ---- */
 
   if (fine) {
     $$(".tilt").forEach(function (card) {
@@ -449,7 +488,7 @@
     { n: "lei_xi", t: "9494" },
     { n: "穹", t: "尿尿何尝不是一种失去" },
     { n: "企鹅", t: "便秘是大肠的挽留，窜稀是屎的自由" },
-    { n: "nsbbdhrz", t: "神秘。" },
+    { n: "nsbbdhrz", t: "神秘" },
     { n: "秦庭柠", t: "（发起了情侣关系）" },
     { n: "凑企鹅", t: "（同意了情侣关系）" },
     { n: "秦庭柠", t: "我？？！" },
@@ -472,6 +511,24 @@
   ];
   var chatIdx = 0;
   var chatTimer = null;
+  var typingRow = null;
+
+  function showTyping() {
+    typingRow = document.createElement("p");
+    typingRow.className = "sys";
+    var dots = document.createElement("span");
+    dots.className = "tdots";
+    dots.innerHTML = "<i></i><i></i><i></i>";
+    typingRow.appendChild(dots);
+    chatlog.appendChild(typingRow);
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { typingRow.classList.add("on"); });
+    });
+  }
+
+  function hideTyping() {
+    if (typingRow) { typingRow.remove(); typingRow = null; }
+  }
 
   function pushChatLine() {
     var item = chatScript[chatIdx % chatScript.length];
@@ -491,21 +548,26 @@
       p.appendChild(text);
     }
     chatlog.appendChild(p);
-    /* 旧行淡出与新行淡入同步进行,高度一增一减互相抵消,面板外纹丝不动 */
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { p.classList.add("on"); });
+    });
     var lines = chatlog.querySelectorAll("p");
     if (lines.length > 6) {
       var first = lines[0];
       first.classList.add("bye");
       setTimeout(function () { first.remove(); }, 680);
     }
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () { p.classList.add("on"); });
-    });
   }
 
   function startChatLoop() {
     if (chatTimer || !chatlog) return;
-    chatTimer = setInterval(pushChatLine, 3000);
+    chatTimer = setInterval(function () {
+      showTyping();
+      setTimeout(function () {
+        hideTyping();
+        pushChatLine();
+      }, 950);
+    }, 3000);
   }
 
   if (chatlog) {
@@ -517,6 +579,7 @@
       if (document.hidden) {
         clearInterval(chatTimer);
         chatTimer = null;
+        hideTyping();
       } else {
         startChatLoop();
       }
@@ -528,7 +591,7 @@
   var wellFacts = [
     "苦力怕其实是只「失败的猪」——当年 Notch 做猪模型时把长和高的参数写反了",
     "苦力怕凑那么近，是想给你一个拥抱——太害羞了，一紧张就炸了",
-    "苦力怕怕猫——在家门口养一群猫，苦力怕绕着你家走",
+    "苦力怕怕猫，在家门口养一群猫，苦力怕绕着你家走",
     "铁傀儡会摘花，送给村里的小孩",
     "恶魂的眼泪是真的哭出来的，能酿成再生药水",
     "猫早上会给主人叼礼物：兔子脚、羽毛，偶尔还有幻翼膜",
@@ -583,14 +646,13 @@
   }
 
   if (wellBtn && wellFact) {
-    wellBtn.addEventListener("click", function (e) {
+    wellBtn.addEventListener("click", function () {
       if (wellFact.classList.contains("swap")) return;
-      clickWave(e, wellBtn);
       drawFact();
     });
   }
 
-  /* ---- GSAP 编排:逐字入场 / 视差 / 数字滚动 ---- */
+  /* ---- GSAP 编排 ---- */
 
   function countTo(el, target) {
     if (!hasGsap) { el.textContent = target; return; }
@@ -603,9 +665,13 @@
     });
   }
 
-  if (hasGsap) {
+  if (hasGsap && typeof window.ScrollTrigger !== "undefined") {
     var gsap = window.gsap;
+    gsap.registerPlugin(window.ScrollTrigger);
+    if (window.SplitText) gsap.registerPlugin(window.SplitText);
+    gsap.ticker.fps(120);
 
+    /* 在线人数等整数滚动 */
     $$(".cnt").forEach(function (el) {
       var target = parseInt(el.textContent, 10);
       if (isNaN(target)) return;
@@ -617,15 +683,375 @@
       });
     });
 
-    gsap.to(".hero__moon", {
-      y: 110,
-      ease: "none",
-      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 0.6 }
+    /* 赞助:金额滚动 + 虚线逐条画出来 */
+    $$(".sponsor .amount").forEach(function (el) {
+      var target = parseFloat(el.textContent);
+      if (isNaN(target)) return;
+      ScrollTrigger.create({
+        trigger: el, start: "top 94%", once: true,
+        onEnter: function () {
+          var proxy = { v: 0 };
+          gsap.to(proxy, {
+            v: target, duration: 1.4, ease: "power2.out",
+            onUpdate: function () { el.textContent = proxy.v.toFixed(2); }
+          });
+        }
+      });
     });
-    gsap.to(".hero__terrain", {
-      y: -26,
+    $$(".sponsor .dots").forEach(function (el, i) {
+      gsap.from(el, {
+        scaleX: 0, transformOrigin: "left center", duration: 0.9, ease: "power3.out", delay: i * 0.06,
+        scrollTrigger: { trigger: el, start: "top 94%", once: true }
+      });
+    });
+
+    /* 步骤数字随滚动点亮 */
+    $$(".step").forEach(function (s) {
+      ScrollTrigger.create({
+        trigger: s, start: "top 78%", once: true,
+        onEnter: function () { s.querySelector(".step__num").classList.add("lit"); }
+      });
+    });
+
+    /* 收尾:巨幅水印随滚动浮起 */
+    gsap.fromTo(".watermark span", { yPercent: 30 }, {
+      yPercent: -12, ease: "none",
+      scrollTrigger: { trigger: ".end-sec", start: "top bottom", end: "bottom bottom", scrub: 0.6 }
+    });
+
+    /* 玩法:fullPage 式接管翻页——拨一下翻一页,3D 卡编排保留 */
+    var mm = gsap.matchMedia();
+    mm.add("(min-width: 701px)", function () {
+      var panels = $$(".pcard");
+      var deck = $(".play-pin");
+      var dotsBox = $("#deckDots");
+      var current = -1, busy = false, engaged = false, aligning = false, armed = true, exiting = false;
+      var pendingDir = 0, lastGo = 0, acc = 0;
+
+      panels.forEach(function (p, i) {
+        gsap.set(p, { zIndex: 10 + i, autoAlpha: 0, yPercent: 60 });
+        gsap.set(p.querySelectorAll("h3, p, .card__tags"), { opacity: 0 });
+      });
+
+      var dots = [];
+      panels.forEach(function (_, i) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.setAttribute("aria-label", "第 " + (i + 1) + " 页");
+        b.addEventListener("click", function () {
+          if (!busy && !exiting && engaged && i !== current) go(i);
+        });
+        dotsBox.appendChild(b);
+        dots.push(b);
+      });
+
+      function bits(p) { return p.querySelectorAll("h3, p, .card__tags"); }
+
+      function go(target) {
+        if (busy || exiting || target === current || target < 0 || target >= panels.length) return;
+        busy = true;
+        lastGo = Date.now();
+        var dir = target > current ? 1 : -1;
+        var oldP = panels[current];
+        var newP = panels[target];
+        current = target;
+        dots.forEach(function (d, i) { d.classList.toggle("on", i === current); });
+        if (oldP) {
+          gsap.to(oldP, {
+            autoAlpha: 0, yPercent: -26 * dir, scale: 0.96, duration: 0.5, ease: "power2.in", overwrite: "auto"
+          });
+        }
+        gsap.fromTo(newP,
+          { yPercent: 130 * dir, rotateX: 14 * dir, autoAlpha: 0 },
+          { yPercent: 0, rotateX: 0, autoAlpha: 1, x: (target % 2 ? "9vw" : "-9vw"), duration: 0.8, ease: "power3.out", delay: 0.14, overwrite: "auto" });
+        gsap.fromTo(bits(newP), { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.5, stagger: 0.09, ease: "power2.out", delay: 0.36, overwrite: "auto",
+            onComplete: function () {
+              busy = false;
+              if (pendingDir && !exiting) {
+                var d = pendingDir;
+                pendingDir = 0;
+                go(current + d);
+              }
+            } });
+      }
+
+      function tryGo(dir) {
+        var t = current + dir;
+        if (t < 0 || t >= panels.length) return false;
+        go(t);
+        return true;
+      }
+
+      var deckAbsTop = 0;
+      function measureDeck() { deckAbsTop = deck.getBoundingClientRect().top + window.scrollY; }
+      measureDeck();
+      window.addEventListener("resize", measureDeck);
+      if (window.ScrollTrigger) ScrollTrigger.addEventListener("refresh", measureDeck);
+      function deckTopNow() { return deckAbsTop - window.scrollY; }
+
+      function alignNow() {
+        aligning = true;
+        engaged = true;
+        if (lenis) lenis.stop();
+        gsap.to({ y: window.scrollY }, {
+          y: window.scrollY + deckTopNow(), duration: 0.5, ease: "power3.out",
+          onUpdate: function () { window.scrollTo(0, this.targets()[0].y); },
+          overwrite: "auto",
+          onComplete: function () {
+            aligning = false;
+            if (current < 0) go(0);
+          }
+        });
+      }
+
+      function exitDeck(dir) {
+        exiting = true;
+        engaged = false;
+        armed = false;
+        var box = panels[current].querySelector(".card");
+        gsap.to(box, { opacity: 0, y: -30 * dir, duration: 0.35, ease: "power2.in" });
+        var startY = window.scrollY;
+        var targetY = startY + dir * window.innerHeight * 0.95;
+        gsap.to({ y: startY }, {
+          y: targetY, duration: 0.7, ease: "power2.inOut", overwrite: "auto",
+          onUpdate: function () { window.scrollTo(0, this.targets()[0].y); },
+          onComplete: function () {
+            gsap.to(box, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" });
+            if (lenis) lenis.start();
+            setTimeout(function () { exiting = false; }, 150);
+          }
+        });
+      }
+
+      function realign() {
+        var t = deckTopNow();
+        if (Math.abs(t) < 2) return false;
+        gsap.to({ y: window.scrollY }, {
+          y: window.scrollY + t, duration: 0.45, ease: "power3.out",
+          onUpdate: function () { window.scrollTo(0, this.targets()[0].y); },
+          overwrite: "auto"
+        });
+        return true;
+      }
+
+      gsap.ticker.add(function () {
+        var t = deckAbsTop - window.scrollY;
+        var vh = window.innerHeight;
+        if (engaged) {
+          if (t < -vh * 0.7 || t > vh * 0.7) {
+            engaged = false;
+            aligning = false;
+            if (lenis) lenis.start();
+          }
+          return;
+        }
+        if (aligning || exiting) return;
+        if (!armed) {
+          if (t > vh || t < -vh) armed = true;
+          return;
+        }
+        if (t <= vh * 0.55 && t >= -vh * 0.55) alignNow();
+      });
+
+      window.addEventListener("wheel", function (e) {
+        if (exiting) { e.preventDefault(); return; }
+        if (!engaged) return;
+        e.preventDefault();
+        if (busy) { pendingDir = e.deltaY > 0 ? 1 : -1; return; }
+        if (realign()) return;
+        var goingOut = (e.deltaY > 0 && current === panels.length - 1) || (e.deltaY < 0 && current === 0);
+        if (goingOut) { exitDeck(e.deltaY > 0 ? 1 : -1); return; }
+        acc += e.deltaY;
+        if (Math.abs(acc) > 26 && Date.now() - lastGo > 320) {
+          if (tryGo(acc > 0 ? 1 : -1)) lastGo = Date.now();
+          acc = 0;
+        }
+      }, { passive: false });
+
+      var touchY = null;
+      window.addEventListener("touchstart", function (e) {
+        if (!engaged) return;
+        touchY = e.touches[0].clientY;
+      }, { passive: true });
+      window.addEventListener("touchmove", function (e) {
+        if (exiting) { if (e.cancelable) e.preventDefault(); return; }
+        if (!engaged) return;
+        var dy = touchY - e.touches[0].clientY;
+        if (Math.abs(dy) < 46) { if (e.cancelable) e.preventDefault(); return; }
+        if (e.cancelable) e.preventDefault();
+        if (busy) { pendingDir = dy > 0 ? 1 : -1; touchY = e.touches[0].clientY; return; }
+        if (realign()) return;
+        var goingOut = (dy > 0 && current === panels.length - 1) || (dy < 0 && current === 0);
+        if (goingOut) { exitDeck(dy > 0 ? 1 : -1); touchY = null; return; }
+        tryGo(dy > 0 ? 1 : -1);
+        touchY = e.touches[0].clientY;
+      }, { passive: false });
+
+      window.addEventListener("keydown", function (e) {
+        if (exiting) { e.preventDefault(); return; }
+        if (!engaged) return;
+        var map = { ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1 };
+        var dir = map[e.key];
+        if (!dir) return;
+        e.preventDefault();
+        if (busy) { pendingDir = dir; return; }
+        var goingOut = (dir > 0 && current === panels.length - 1) || (dir < 0 && current === 0);
+        if (goingOut) { exitDeck(dir); return; }
+        tryGo(dir);
+      });
+
+      return function () {
+        panels.forEach(function (p) {
+          gsap.set([p, p.querySelectorAll("h3, p, .card__tags")], { clearProps: "all" });
+        });
+        dotsBox.innerHTML = "";
+        if (lenis) lenis.start();
+      };
+    });
+
+    mm.add("(max-width: 700px)", function () {
+      $$(".pcard").forEach(function (c) {
+        gsap.from(c, {
+          autoAlpha: 0, y: 40, duration: 0.8, ease: "power3.out",
+          scrollTrigger: { trigger: c, start: "top 85%", toggleActions: "play none none reverse" }
+        });
+      });
+    });
+
+    /* 桌面指针:卡片聚光灯(--mx/--my 喂给 CSS 的 ::before)+ 3D 倾斜 */
+    if (window.matchMedia("(pointer: fine)").matches) {
+      $$(".tile, .pcard .card").forEach(function (card) {
+        var amp = card.classList.contains("tile") ? 4.5 : 7;
+        var rx = gsap.quickTo(card, "rotationX", { duration: 0.55, ease: "power2.out" });
+        var ry = gsap.quickTo(card, "rotationY", { duration: 0.55, ease: "power2.out" });
+        card.addEventListener("pointermove", function (e) {
+          var r = card.getBoundingClientRect();
+          var px = (e.clientX - r.left) / r.width;
+          var py = (e.clientY - r.top) / r.height;
+          card.style.setProperty("--mx", (px * 100).toFixed(2) + "%");
+          card.style.setProperty("--my", (py * 100).toFixed(2) + "%");
+          ry((px - 0.5) * amp);
+          rx(-(py - 0.5) * amp);
+        });
+        card.addEventListener("pointerleave", function () { rx(0); ry(0); });
+      });
+    }
+
+    /* 服务器地址:机场翻牌进场 */
+    var addr = $("#addrFlap");
+    if (addr) {
+      var addrText = addr.textContent;
+      addr.setAttribute("aria-label", addrText);
+      addr.textContent = "";
+      var flapChars = [];
+      for (var fi = 0; fi < addrText.length; fi++) {
+        var fs = document.createElement("i");
+        fs.className = "flapchar";
+        fs.textContent = addrText[fi];
+        addr.appendChild(fs);
+        flapChars.push(fs);
+      }
+      ScrollTrigger.create({
+        trigger: addr, start: "top 88%", once: true,
+        onEnter: function () {
+          var pool = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789.-";
+          flapChars.forEach(function (fc, k) {
+            var settled = false;
+            gsap.fromTo(fc, { rotationX: -92, autoAlpha: 0 }, {
+              rotationX: 0, autoAlpha: 1, duration: 0.55, delay: k * 0.05, ease: "back.out(1.4)",
+              onUpdate: function () {
+                if (!settled && this.progress() > 0.55) { settled = true; fc.textContent = addrText[k]; }
+                else if (!settled) fc.textContent = pool[Math.floor(Math.random() * pool.length)];
+              }
+            });
+          });
+        }
+      });
+    }
+
+    /* 标题:每区一套专属入场(玩法区并入钉住时间线) */
+    var headFx = {
+      feat: "scramble", chat: "typing", well: "drop",
+      join: "mask", sponsors: "shine", faq: "fade"
+    };
+
+    function scrambleChar(el, finalText, delay) {
+      var pool = "✦✧★·夜月星01";
+      var proxy = { p: 0 };
+      gsap.to(proxy, {
+        p: 1, duration: 0.55, delay: delay, ease: "none",
+        onUpdate: function () {
+          el.textContent = proxy.p < 1 ? pool[Math.floor(Math.random() * pool.length)] : finalText;
+        }
+      });
+    }
+
+    var headsDone = false;
+    function initHeadFx() {
+      if (headsDone || !window.SplitText) return;
+      headsDone = true;
+      $$(".section__head h2").forEach(function (h) {
+        var sec = h.closest("section");
+        var fx = (sec && headFx[sec.id]) || "fade";
+        var split = window.SplitText.create(h, { type: "chars", charsClass: "h2char" });
+        var chars = split.chars;
+        var st = { trigger: h, start: "top 86%", toggleActions: "play none none reverse" };
+
+        if (fx === "mask") {
+          split.revert();
+          split = window.SplitText.create(h, { type: "lines", mask: "lines" });
+          gsap.from(split.lines, {
+            yPercent: 120, duration: 1.05, ease: "power4.out", stagger: 0.09,
+            scrollTrigger: st, onComplete: function () { split.revert(); }
+          });
+        } else if (fx === "scramble") {
+          gsap.set(chars, { autoAlpha: 0 });
+          ScrollTrigger.create({
+            trigger: h, start: "top 86%", once: true,
+            onEnter: function () {
+              chars.forEach(function (c, i) { scrambleChar(c, c.textContent, i * 0.06); });
+              gsap.to(chars, { autoAlpha: 1, duration: 0.2, stagger: 0.05 });
+            }
+          });
+        } else if (fx === "typing") {
+          gsap.from(chars, {
+            autoAlpha: 0, duration: 0.05, ease: "none", stagger: 0.16,
+            scrollTrigger: st, onComplete: function () { split.revert(); }
+          });
+        } else if (fx === "drop") {
+          gsap.from(chars, {
+            y: -90, autoAlpha: 0, ease: "bounce.out", duration: 1.1, stagger: 0.08,
+            scrollTrigger: st, onComplete: function () { split.revert(); }
+          });
+        } else if (fx === "shine") {
+          gsap.from(chars, {
+            autoAlpha: 0, x: -16, color: "#f2d98c", duration: 0.6, ease: "power3.out", stagger: 0.05,
+            scrollTrigger: st, onComplete: function () { split.revert(); }
+          });
+        } else if (fx === "wave") {
+          gsap.from(chars, {
+            yPercent: 90, autoAlpha: 0, ease: "back.out(1.9)", duration: 0.85, stagger: 0.045,
+            scrollTrigger: st, onComplete: function () { split.revert(); }
+          });
+        } else {
+          split.revert();
+          gsap.from(h, { autoAlpha: 0, y: 14, duration: 0.7, ease: "power2.out", scrollTrigger: st });
+        }
+      });
+    }
+
+    /* 页脚视差掀开 */
+    gsap.fromTo(".footer__inner", { yPercent: 45 }, {
+      yPercent: 0,
       ease: "none",
-      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 0.8 }
+      scrollTrigger: { trigger: ".footer", start: "top bottom", end: "top 55%", scrub: 0.5 }
+    });
+
+    /* 收尾:巨幅水印随滚动浮起 */
+    gsap.fromTo(".watermark span", { yPercent: 30 }, {
+      yPercent: -12, ease: "none",
+      scrollTrigger: { trigger: ".end-sec", start: "top bottom", end: "bottom bottom", scrub: 0.6 }
     });
 
     var heroStarted = false;
@@ -634,13 +1060,34 @@
       heroStarted = true;
       var wordmark = $(".hero__wordmark");
       if (!wordmark || !window.SplitText) return;
+      var isDay = document.body.classList.contains("theme-day");
       var split = new window.SplitText(wordmark, { type: "chars", charsClass: "char" });
-      gsap.fromTo(split.chars,
-        { yPercent: 62, autoAlpha: 0, rotate: 5 },
-        { yPercent: 0, autoAlpha: 1, rotate: 0, duration: 0.95, ease: "power3.out", stagger: 0.06, delay: 0.15 });
+      var tl = gsap.timeline();
+      if (!isDay) {
+        tl.fromTo("#stars", { opacity: 0 }, { opacity: 1, duration: 1.2, ease: "power1.out", clearProps: "opacity" }, 0.35);
+        tl.fromTo(".hero__moon", { opacity: 0, yPercent: 60 }, { opacity: 1, yPercent: 0, duration: 1.4, ease: "power2.out", clearProps: "opacity,transform" }, 0.5);
+        tl.fromTo(".hero__fireflies", { opacity: 0 }, { opacity: 1, duration: 0.9, clearProps: "opacity" }, 1.3);
+      } else {
+        tl.fromTo(".hero__sun", { opacity: 0, yPercent: 40 }, { opacity: 1, yPercent: 0, duration: 1.3, ease: "power2.out", clearProps: "opacity,transform" }, 0.5);
+        tl.fromTo(".hero__clouds", { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 1.4, ease: "power1.out", clearProps: "opacity,transform" }, 0.6);
+      }
+      tl.fromTo(".hero__eyebrow", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 1.0);
+      tl.fromTo(split.chars,
+        { yPercent: 62, autoAlpha: 0 },
+        { yPercent: 0, autoAlpha: 1, duration: 0.9, ease: "power3.out", stagger: 0.08 }, 1.1);
+      tl.fromTo(wordmark, { "--gx": "100%" }, { "--gx": "0%", duration: 2.0, ease: "power2.inOut" }, 2.0);
+      tl.fromTo(".hero__tagline", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 1.85);
+      tl.fromTo(".hero__sub", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 2.0);
+      tl.fromTo(".hero__actions .btn", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, stagger: 0.12, ease: "power2.out" }, 2.15);
+      tl.fromTo(".hero__meta .pill", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, stagger: 0.1, ease: "power2.out" }, 2.3);
     }
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(startHero);
-    window.addEventListener("load", startHero);
+    function bootText() {
+      startHero();
+      initHeadFx();
+      initReveals();
+    }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(bootText);
+    window.addEventListener("load", bootText);
 
     /* 保险丝:标题若被异常打断还藏着,3 秒后强制亮出来 */
     gsap.delayedCall(3, function () {
@@ -696,7 +1143,25 @@
   refreshStatus();
   setInterval(refreshStatus, 60000);
 
+  /* ---- 页脚时钟 ---- */
+
+  var clock = $("#clock");
+  var lastClockMin = -1;
+  function tickClock() {
+    var now = new Date();
+    if (now.getMinutes() === lastClockMin) return;
+    lastClockMin = now.getMinutes();
+    var h = now.getHours();
+    var t = new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false }).format(now);
+    clock.textContent = (h >= 23 || h < 5 ? "夜深了 · " : "本地时间 ") + t;
+  }
+  if (clock) {
+    tickClock();
+    setInterval(tickClock, 1000);
+  }
+
   /* ---- 页脚年份 ---- */
 
-  $("#year").textContent = new Date().getFullYear();
+  var year = $("#year");
+  if (year) year.textContent = new Date().getFullYear();
 })();
