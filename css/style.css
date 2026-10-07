@@ -486,6 +486,26 @@ body.theme-day .hero .pill {
   border-color: rgba(35, 48, 94, 0.25);
   background: rgba(255, 255, 255, 0.4);
 }
+/* 白天:玻璃按钮全局换白底(FAQ/步骤区等) */
+/* 白天:复制提示弹窗换白玻璃 */
+body.theme-day .toast {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(255, 250, 235, 0.88));
+  border-color: rgba(169, 119, 17, 0.4);
+  color: #1c2a4e;
+  box-shadow: 0 14px 44px rgba(30, 60, 120, 0.18), 0 0 24px rgba(255, 202, 92, 0.25);
+}
+body.theme-day .toast svg { stroke: #3f8f6b; }
+
+body.theme-day .btn--glass {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(255, 250, 235, 0.62));
+  color: #1c2a4e;
+  border-color: rgba(28, 42, 78, 0.18);
+}
+body.theme-day .btn--glass:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(169, 119, 17, 0.45);
+}
+
 body.theme-day .hero .btn--glass {
   color: #23305e;
   border-color: rgba(35, 48, 94, 0.35);

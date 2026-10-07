@@ -356,7 +356,18 @@
       });
     });
   }
-  if (!hasGsap) $$(".reveal").forEach(function (el) { el.classList.add("on"); });
+  if (!hasGsap) $(".reveal").forEach(function (el) { el.classList.add("on"); });
+
+  /* ---- FAQ 手风琴(互斥展开) ---- */
+
+  $$(".acc__btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var item = btn.closest(".acc");
+      var wasOpen = item.classList.contains("open");
+      $$(".acc.open").forEach(function (o) { o.classList.remove("open"); });
+      if (!wasOpen) item.classList.add("open");
+    });
+  });
 
   /* ---- 一键复制 + 提示气泡 ---- */
 
